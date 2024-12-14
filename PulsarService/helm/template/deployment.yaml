@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "openjdk:17-jdk-slim"
+          command:
+            - "sh"
+            - "-c"
+            - "java -jar /mnt/nfs/pulsarservice.jar"
+          env:
+            - name: PULSAR_SERVICE_URL
+              value: "{{ .Values.pulsar.serviceUrl }}"
+            - name: INPUT_TOPIC
+              value: "{{ .Values.pulsar.inputTopic }}"
+            - name: OUTPUT_TOPIC
+              value: "{{ .Values.pulsar.outputTopic }}"
+            - name: SUBSCRIPTION_NAME
+              value: "{{ .Values.pulsar.subscriptionName }}"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: nfs-storage
+              mountPath: /mnt/nfs
+      volumes:
+        - name: nfs-storage
+          nfs:
+            server: nfs-server.example.com
+            path: "/mnt/nfs"
